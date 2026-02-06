@@ -1,5 +1,7 @@
 # Usage - ./vmsetup.ps1
-# You need to connect to your vcenter using 'Connect-VIServer -Server IP.Of.ESXI.Here` before running this script
+# You need to connect to your vcenter using 
+# '$vcenter=vcenter.name.local' and 
+# 'Connect-VIServer -Server $vcenter` without the '' before running this script
 # Define Parameters
 param(
     [string]$VmName,
