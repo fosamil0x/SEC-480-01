@@ -48,8 +48,9 @@ if ($CloneType -eq "L") {
                     -Datastore $ds
 
     # Snapshot the new clone
-    Echo "Taking snapshot of new VM called 'base'"
+    Echo "Taking snapshot of new VM called 'base'..."
     $newvm | New-Snapshot -Name "base"
+    Echo "Be sure to validate the network of the new VM! It is probably on VM Network"
 
 }
 elseif ($CloneType -eq "F") {
@@ -57,7 +58,7 @@ elseif ($CloneType -eq "F") {
 
     # Approach: create linked clone temporarily, then full clone from that
     $tempName = "{0}.linked-temp" -f $VmName
-    Echo "Creating [l]inked clone first..."
+    Echo "Creating [L]inked clone first..."
     $linkedvm = New-VM -LinkedClone `
                        -Name $tempName `
                        -VM $vm `
@@ -66,20 +67,21 @@ elseif ($CloneType -eq "F") {
                        -Datastore $ds
 
     # Now create a full clone from the temporary linked clone
-    Echo "Creating [f]ull clone now ..."
+    Echo "Creating [F]ull clone now ..."
     $newvm = New-VM -Name $NewVmName `
                     -VM $linkedvm `
                     -VMHost $vmhost `
                     -Datastore $ds
 
-    # Optional snapshot of the new full clone
-    Echo "Taking snapshot of new full clone called 'base'"
+    # Snapshot of the new full clone
+    Echo "Taking snapshot of new full clone called 'base'..."
     $newvm | New-Snapshot -Name "base"
+    Echo "Be sure to validate the network of the new VM! It is probably on VM Network"
 
     # Clean up the temporary linked clone
-    Echo "Removing temporary linked clone"
+    Echo "Removing temporary linked clone..."
     $linkedvm | Remove-VM -Confirm:$false
-    Write-Host "Temporary linked clone '$($linkedvm.Name)'
+    Write-Host "Temporary linked clone '$($linkedvm.Name)'"
 }
 else {
     Write-Error "CloneType must be '[F]ull' or '[L]inked'."
