@@ -37,7 +37,7 @@ $vmhost   = Get-VMHost -Name $EsxiHost
 $ds       = Get-Datastore -Name $DatastoreName
 
 if ($CloneType -eq "L") {
-    Write-Host "Creating LINKED clone '$NewVmName' from '$VmName'..."
+    Write-Host "Creating [L]INKED clone '$NewVmName' from '$VmName'..."
     $newvm = New-VM -LinkedClone `
                     -Name $NewVmName `
                     -VM $vm `
@@ -51,11 +51,11 @@ if ($CloneType -eq "L") {
 
 }
 elseif ($CloneType -eq "F") {
-    Write-Host "Creating FULL clone '$NewVmName' from '$VmName'..."
+    Write-Host "Creating [F]ULL clone '$NewVmName' from '$VmName'..."
 
     # Approach: create linked clone temporarily, then full clone from that
     $tempName = "{0}.linked-temp" -f $VmName
-    Echo "Creating linked clone first..."
+    Echo "Creating [l]inked clone first..."
     $linkedvm = New-VM -LinkedClone `
                        -Name $tempName `
                        -VM $vm `
@@ -64,7 +64,7 @@ elseif ($CloneType -eq "F") {
                        -Datastore $ds
 
     # Now create a full clone from the temporary linked clone
-    Echo "Creating full clone now ..."
+    Echo "Creating [f]ull clone now ..."
     $newvm = New-VM -Name $NewVmName `
                     -VM $linkedvm `
                     -VMHost $vmhost `
