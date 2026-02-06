@@ -50,7 +50,7 @@ if ($CloneType -eq "L") {
     $newvm | New-Snapshot -Name "base"
 
 }
-elseif ($CloneType -eq "[F]") {
+elseif ($CloneType -eq "F") {
     Write-Host "Creating FULL clone '$NewVmName' from '$VmName'..."
 
     # Approach: create linked clone temporarily, then full clone from that
