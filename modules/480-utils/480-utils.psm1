@@ -84,6 +84,7 @@ function select-vm([string] $folder)
 
 function cloner([string] $config_path)
 {
+    clear-host
     # Write the Config Path
     Write-Host "Config Path: $config_path"
     # Get content from the config file
@@ -128,6 +129,7 @@ function cloner([string] $config_path)
     # do loop with error handling for finding the right snapshot
     do {
         
+        # Set a selected VM with that folder
         $selected_vm = select-vm -folder $user_folder
         # Define user_snapshot
         $user_snapshot = Read-Host "What snapshot do you want? [$snapshot]"
@@ -136,12 +138,30 @@ function cloner([string] $config_path)
             $user_snapshot = $snapshot
         }
 
-        # check the folder and get VM Names
-        write-host "$selected_vm is selected_vm"
+        # check the folder and get VM Name
+        write-host "$selected_vm is Selected_vm"
         $snapshot_test = Get-Snapshot -VM $selected_vm -Name "$user_snapshot" -ErrorAction SilentlyContinue
         if (-not $snapshot_test) {
             write-host "Snapshot '$user_snapshot' not found, please try another snapshot name" -Foregroundcolor Red
         }
     } while  (-not $snapshot_test)
     Get-Snapshot -VM $selected_vm -Name "$user_snapshot"
+    
+    #
+    # Set a datastore with another do loop
+    do {
+        # Define user_datastore
+        $user_datastore = Read-Host "What snapshot do you want? [$datastore]"
+        # Lock in user_datastore
+        if ([string]::IsNullOrWhiteSpace($user_datastore)) {
+            $user_datastore = $datastore
+        }
+
+        # Check to make sure the datastore works
+        $datastore_test = Get-Datastore -Name "$user_datastore" -ErrorAction SilentlyContinue
+        if (-not $datastore_test) {
+            write-host "Datastore '$user_datastore' not found, please try another datastore name" -Foregroundcolor Red
+         } 
+        } while (-not $datastore_test)
+        Get-Datastore -Name $user_datastore | Select-Object Name, FreeSpaceGB, CapacticyGB | Sort-Object Name | Format-Table -Autosize 
 }
