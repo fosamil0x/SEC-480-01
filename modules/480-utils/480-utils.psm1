@@ -128,7 +128,7 @@ function cloner([string] $config_path)
     # do loop with error handling for finding the right snapshot
     do {
         
-        $select_vm_out = select-vm -folder $user_folder
+        $selected_vm = select-vm -folder $user_folder
         # Define user_snapshot
         $user_snapshot = Read-Host "What snapshot do you want? [$snapshot]"
         # Lock in user_snapshot
@@ -137,8 +137,8 @@ function cloner([string] $config_path)
         }
 
         # check the folder and get VM Names
-        write-host "$select_vm_out is select_vm_out"
-        $snapshot_test = Get-Snapshot -VM $select_vm_out -Name "$user_snapshot" -ErrorAction SilentlyContinue
+        write-host "$selected_vm is selected_vm"
+        $snapshot_test = Get-Snapshot -VM $selected_vm -Name "$user_snapshot" -ErrorAction SilentlyContinue
         if (-not $snapshot_test) {
             write-host "Snapshot '$user_snapshot' not found, please try another snapshot name" -Foregroundcolor Red
         }
