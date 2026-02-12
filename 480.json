@@ -1,0 +1,8 @@
+{
+    "vcenter_server" : "vcenter.luc.local",
+    "vm_folder" : "basevm",
+    "esxi_host" : "192.168.3.207",
+    "default_network" : "480-internal",
+    "default_datastore" : "datastore2",
+    "default_snapshot" : "base"
+}

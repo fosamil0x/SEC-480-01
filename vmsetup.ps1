@@ -1,7 +1,3 @@
-# Usage - ./vmsetup.ps1
-# You need to connect to your vcenter using 
-# '$vcenter=vcenter.name.local' and 
-# 'Connect-VIServer -Server $vcenter` without the '' before running this script
 # Define Parameters
 param(
     [string]$VmName,
@@ -14,16 +10,16 @@ param(
 )
 
 # Prompt for anything not supplied
-Echo "Available VMs..."
+Write-Host "Available VMs..."
 Get-VM
 if (-not $VmName)       { $VmName       = Read-Host "Enter source VM name (e.g. 480-device-firstname)" }
-Echo "Available Snapshots..."
+Write-Host "Available Snapshots..."
 Get-Snapshot -VM "$VmName" | Select-object Name, Description, Created | Format-Table -Autosize
 if (-not $SnapshotName) { $SnapshotName = Read-Host "Enter snapshot name (e.g. base)" }
-Echo "Available Hosts..."
+Write-Host "Available Hosts..."
 Get-VMHost | Select-Object Name, ConnectionState | Format-Table -Autosize
 if (-not $EsxiHost)     { $EsxiHost     = Read-Host "Enter ESXi host/IP" }
-Echo "Available Datastores..."
+Write-Host "Available Datastores..."
 Get-Datastore | Select-Object Name, FreeSpaceGB, CapacticyGB | Sort-Object Name | Format-Table -Autosize
 if (-not $DatastoreName){ $DatastoreName= Read-Host "Enter datastore name" }
 if (-not $NewVmName)    { $NewVmName    = Read-Host "Enter new VM name (e.g. Win10.base)" }
@@ -48,9 +44,9 @@ if ($CloneType -eq "L") {
                     -Datastore $ds
 
     # Snapshot the new clone
-    Echo "Taking snapshot of new VM called 'base'..."
+    Write-Host "Taking snapshot of new VM called 'base'..."
     $newvm | New-Snapshot -Name "base"
-    Echo "Be sure to validate the network of the new VM! It is probably on VM Network"
+    Write-Host "Be sure to validate the network of the new VM! It is probably on VM Network"
 
 }
 elseif ($CloneType -eq "F") {
@@ -58,7 +54,7 @@ elseif ($CloneType -eq "F") {
 
     # Approach: create linked clone temporarily, then full clone from that
     $tempName = "{0}.linked-temp" -f $VmName
-    Echo "Creating [L]inked clone first..."
+    Write-Host "Creating [L]inked clone first..."
     $linkedvm = New-VM -LinkedClone `
                        -Name $tempName `
                        -VM $vm `
@@ -67,19 +63,19 @@ elseif ($CloneType -eq "F") {
                        -Datastore $ds
 
     # Now create a full clone from the temporary linked clone
-    Echo "Creating [F]ull clone now ..."
+    Write-Host "Creating [F]ull clone now ..."
     $newvm = New-VM -Name $NewVmName `
                     -VM $linkedvm `
                     -VMHost $vmhost `
                     -Datastore $ds
 
     # Snapshot of the new full clone
-    Echo "Taking snapshot of new full clone called 'base'..."
+    Write-Host "Taking snapshot of new full clone called 'base'..."
     $newvm | New-Snapshot -Name "base"
-    Echo "Be sure to validate the network of the new VM! It is probably on VM Network"
+    Write-Host "Be sure to validate the network of the new VM! It is probably on VM Network"
 
     # Clean up the temporary linked clone
-    Echo "Removing temporary linked clone..."
+    Write-Host "Removing temporary linked clone..."
     $linkedvm | Remove-VM -Confirm:$false
     Write-Host "Temporary linked clone '$($linkedvm.Name)'"
 }
