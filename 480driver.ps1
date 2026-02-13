@@ -2,7 +2,7 @@
 Import-Module '/home/luc-480/Desktop/SEC-480-01/modules/480-utils/480-utils.psm1' -Force
 
 # test your function
-480banner
+#480banner
 
 # Provide config file
 #$conf = 480config -config_path "/home/luc-480/Desktop/SEC-480-01/480.json"
