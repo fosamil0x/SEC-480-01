@@ -1,0 +1,16 @@
+# Initialize variable (null or invalid)
+$vmName = $null
+
+# Loop while variable is empty OR VM already exists
+while ([string]::IsNullOrWhiteSpace($vmName) -or (Get-VM -Name $vmName -ErrorAction SilentlyContinue)) {
+    
+    # If it was already set but exists, tell the user
+    if (-not [string]::IsNullOrWhiteSpace($vmName)) {
+        Write-Warning "VM '$vmName' already exists. Please enter a different name."
+    }
+    
+    # Prompt for input
+    $vmName = Read-Host "Enter a new, unique VM name"
+}
+
+Write-Host "Valid unique VM name defined: $vmName"
