@@ -13,6 +13,19 @@ function 480banner()
 
 function 480connect([string] $server)
 {
+    <#
+    $connection = $global:DefaultVIServer
+    #test connection
+    If ($connection) {
+        $message = "Already connected to {0}" -f $connection
+        
+        Write-Host -foregroundcolor Green $message
+    }else
+    {
+        Write-host "Connecting, provide credentials"
+        $connection = Connect-VIServer -server $server
+    }
+    #>
     $connection = $global:DefaultVIServer
     # Test connection to default server
     if ($connection -and $connection.Name -eq $server) {
@@ -122,6 +135,8 @@ function cloner([string] $config_path)
     # Connect to vcenter
     480connect -server $user_server
 
+
+
     # Do loop with error handling for finding the right folder
     do {
         
@@ -230,6 +245,9 @@ function cloner([string] $config_path)
         # Set clone type to linked or full
         $clone_type = Read-Host "What clone type would you like? Enter 'F'ull or 'L'inked"
 
+        while ($clone_type -ne 'F' -and $clone_type -ne 'L') {
+            $clone_type = Read-Host "What clone type would you like? Enter 'F'ull or 'L'inked"
+        }
     # Create a linked clone with L
     if ($clone_type -eq "L") {
         Write-Host "Creating [L]INKED clone '$new_vm_name' from '$selected_vm'..." -ForegroundColor Green
@@ -263,7 +281,7 @@ function cloner([string] $config_path)
         # Print the Network info to the screen if you wanna make sure it's working. Just uncomment the line below as needed
         Write-Host "Using Network '$user_network'..." -ForegroundColor Green
         Write-Host "Attempting to set network..."
-        $newvm | Get-NetworkAdapter | Set-NetworkAdapter -NetworkName '$user_network'
+        $newvm | Get-NetworkAdapter | Set-NetworkAdapter -NetworkName "$user_network"
 
         Write-Host "output of 'newvm | Get-NetworkAdapter Select-Object Parent, NetworkName | Format-Table -Autosize'"
         $newvm | Get-NetworkAdapter | Select-Object Parent, NetworkName | Format-Table -Autosize
@@ -319,14 +337,10 @@ function cloner([string] $config_path)
         # Print the Network info to the screen if you wanna make sure it's working. Just uncomment the line below
         Write-Host "Using Network '$user_network'..." -ForegroundColor Green
         Write-Host "Attempting to set network..."
-        $newvm | Get-NetworkAdapter | Set-NetworkAdapter -NetworkName '$user_network'
+        $newvm | Get-NetworkAdapter | Set-NetworkAdapter -NetworkName "$user_network"
 
         Write-Host "output of 'newvm | Get-NetworkAdapter Select-Object Parent, NetworkName | Format-Table -Autosize'"
         $newvm | Get-NetworkAdapter | Select-Object Parent, NetworkName | Format-Table -Autosize
 
         }
-    
-else {
-    $clone_type = read-host "Please choose 'F'ull or 'L'inked. The clone must be 'F' or 'L'"
     }
-}
