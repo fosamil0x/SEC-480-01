@@ -14,26 +14,37 @@ function 480banner()
 function 480connect([string] $server)
 {
     $connection = $global:DefaultVIServer
-    #test connection
-    If ($connection) {
+    # Test connection to default server
+    if ($connection -and $connection.Name -eq $server) {
         $message = "Already connected to {0}" -f $connection
-        
         Write-Host -foregroundcolor Green $message
-    }else
-    {
+    } 
+    # If default connection fails, force a connection to a server with credentials. 
+    else { 
+        do { 
         Write-host "Connecting, provide credentials"
-        $connection = Connect-VIServer -server $server
+        $connection = Connect-VIServer -server $server -ErrorAction SilentlyContinue
+        $connection = $global:DefaultVIServer
+        if ($connection -and $connection.Name -eq $server) {
+            $message = "Connection to $server succeeded. Using $server"
+            Write-Host $message -ForegroundColor Green
+            break
+        }
+        else {
+            $server = Read-Host "What server would you like to use? Provide a valid server"
+        }
+    } while ($true)
     }
-
 }
+
 
 function 480config ([string] $config_path)
 {
     # Tell user that it's looking for the provided path
     Write-host "Reading $config_path"
-    #set config to null before running the content of the function
+    # Set config to null before running the content of the function
     $conf=$null
-    #test the path and let the user know if it works or not
+    # Test the path and let the user know if it works or not
     If (test-path $config_path)
     {
         $conf = (Get-Content -Raw -Path $config_path | ConvertFrom-json)
@@ -43,12 +54,12 @@ function 480config ([string] $config_path)
     else {
         Write-Host -ForegroundColor "Yellow" "No Config Path found"
     }
-    #end with the config
+    # End with the config
     return $conf
 }
 
 function select-vm([string] $folder)
-#Choose a VM to clone in a provided folder
+# Choose a VM to clone in a provided folder
 {
     $selected_vm=$null
     try {
@@ -87,12 +98,12 @@ function cloner([string] $config_path)
     
     # Run your banner
     480banner
-    # Write the Config Path
+    # Write the config path
     Write-Host "Config Path: $config_path"
     # Get content from the config file
     $config = Get-Content -Raw -Path $config_Path | ConvertFrom-Json
 
-    # Define Defaults
+    # Define defaults
     $server = $config.vcenter_server
     $folder = $config.vm_folder
     $esxi = $config.esxi_host
@@ -111,17 +122,17 @@ function cloner([string] $config_path)
     # Connect to vcenter
     480connect -server $user_server
 
-    # do loop with error handling for finding the right folder
+    # Do loop with error handling for finding the right folder
     do {
         
         # Define user_folder
-        $user_folder = Read-Host "What folder do you want? [$folder]"
+        $user_folder = Read-Host "What folder do you want to base your new VM on? [$folder]"
         # Lock in user_folder
         if ([string]::IsNullOrWhiteSpace($user_folder)) {
             $user_folder = $folder
         }
 
-        # check the folder and get VM Names
+        # Check the folder and get VM Names
         $folder_test = Get-Folder -Name $user_folder -ErrorAction SilentlyContinue
         # Check to make sure it actually works
         if (-not $folder_test) {
@@ -129,11 +140,12 @@ function cloner([string] $config_path)
         }
     } while  (-not $folder_test)
 
-    # do loop with error handling for finding the right snapshot
+    # Set a selected VM with that folder
+        $selected_vm = select-vm -folder $user_folder
+
+    # Do loop with error handling for finding the right snapshot
     do {
         
-        # Set a selected VM with that folder
-        $selected_vm = select-vm -folder $user_folder
         # Define user_snapshot
         $user_snapshot = Read-Host "What snapshot do you want? [$snapshot]"
         # Lock in user_snapshot
@@ -141,8 +153,8 @@ function cloner([string] $config_path)
             $user_snapshot = $snapshot
         }
 
-        # check the folder and get VM Name
-        # write-host "$selected_vm is Selected_vm"
+        # Check the folder and get VM Name
+        # Write-host "$selected_vm is Selected_vm"
         $snapshot_test = Get-Snapshot -VM $selected_vm -Name "$user_snapshot" -ErrorAction SilentlyContinue
         if (-not $snapshot_test) {
             write-host "Snapshot '$user_snapshot' not found, please try another snapshot name" -Foregroundcolor Red
@@ -185,7 +197,7 @@ function cloner([string] $config_path)
             $user_esxi = $esxi
         }
 
-        # Check to make sure the datastore works
+        # Check to make sure the esxi host works
         $esxi_test = Get-VMHost -Name "$user_esxi" -ErrorAction SilentlyContinue
         if (-not $esxi_test) {
             write-host "ESXI host '$user_esxi' not found, please try another ESXI host" -Foregroundcolor Red
@@ -198,8 +210,7 @@ function cloner([string] $config_path)
         # Print the ESXI info to the screen if you wanna make sure it's working. Just uncomment the line below
         # Get-VMHost -Name $user_esxi | Select-Object Name, ConnectionState, Version | Sort-Object Name | Format-Table -Autosize
         
-        # Force $new_vm_name to be defined
-        # Make new_vm_name null
+        # Force $new_vm_name to be defined, starting with it as null
         $new_vm_name = $null
         # Make a loop for if new_vm_name already exists or if it's empty
         while ([string]::IsNullOrWhiteSpace($new_vm_name) -or (Get-VM -Name $new_vm_name -ErrorAction SilentlyContinue)) {
@@ -210,7 +221,7 @@ function cloner([string] $config_path)
             }
             
             # Prompt for input
-            $vmName = Read-Host "Enter a new, unique VM name"
+            $new_vm_name = Read-Host "Enter a new, unique VM name"
         }
 
         # Tell user what the new_vm_name is
@@ -219,6 +230,7 @@ function cloner([string] $config_path)
         # Set clone type to linked or full
         $clone_type = Read-Host "What clone type would you like? Enter 'F'ull or 'L'inked"
 
+    # Create a linked clone with L
     if ($clone_type -eq "L") {
         Write-Host "Creating [L]INKED clone '$new_vm_name' from '$selected_vm'..." -ForegroundColor Green
         $newvm = New-VM -LinkedClone `
@@ -248,15 +260,16 @@ function cloner([string] $config_path)
          } 
         } while (-not $network_test) 
         
-        # Print the Network info to the screen if you wanna make sure it's working. Just uncomment the line below
+        # Print the Network info to the screen if you wanna make sure it's working. Just uncomment the line below as needed
         Write-Host "Using Network '$user_network'..." -ForegroundColor Green
         Write-Host "Attempting to set network..."
-        $newvm | Get-NetworkAdapter | Set-NetworkAdapter -NetworkName $user_network
+        $newvm | Get-NetworkAdapter | Set-NetworkAdapter -NetworkName '$user_network'
 
         Write-Host "output of 'newvm | Get-NetworkAdapter Select-Object Parent, NetworkName | Format-Table -Autosize'"
         $newvm | Get-NetworkAdapter | Select-Object Parent, NetworkName | Format-Table -Autosize
         }
 
+    # Create a full clone if the user inputs F
     elseif ($clone_type -eq "F") {
     Write-Host "Creating [F]ULL clone '$new_vm_name' from '$selected_vm'..."
 
@@ -285,7 +298,9 @@ function cloner([string] $config_path)
     # Clean up the temporary linked clone
     Write-Host "Removing temporary linked clone..."
     $linkedvm | Remove-VM -Confirm:$false
-    Write-Host "Temporary linked clone '$($linkedvm.Name)'"# Set the network
+    Write-Host "Temporary linked clone '$($linkedvm.Name)'"
+    
+    # Set the network
         # Open a do loop to get the network figured out without attempting to make a new linked clone
         do {
         # Set the network
@@ -304,13 +319,14 @@ function cloner([string] $config_path)
         # Print the Network info to the screen if you wanna make sure it's working. Just uncomment the line below
         Write-Host "Using Network '$user_network'..." -ForegroundColor Green
         Write-Host "Attempting to set network..."
-        $newvm | Get-NetworkAdapter | Set-NetworkAdapter -NetworkName $user_network
+        $newvm | Get-NetworkAdapter | Set-NetworkAdapter -NetworkName '$user_network'
 
         Write-Host "output of 'newvm | Get-NetworkAdapter Select-Object Parent, NetworkName | Format-Table -Autosize'"
         $newvm | Get-NetworkAdapter | Select-Object Parent, NetworkName | Format-Table -Autosize
 
         }
-    } 
+    
 else {
-    Write-Error "CloneType must be 'F'ull or 'L'inked."
+    $clone_type = read-host "Please choose 'F'ull or 'L'inked. The clone must be 'F' or 'L'"
     }
+}
