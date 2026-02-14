@@ -1,16 +1,23 @@
-# Initialize variable (null or invalid)
-$vmName = $null
+function 480connect {
+    param( [string]$server )
+    do {
+        if (-not $server) {
+            $server = Read-Host "What server do you want?"
+        }
 
-# Loop while variable is empty OR VM already exists
-while ([string]::IsNullOrWhiteSpace($vmName) -or (Get-VM -Name $vmName -ErrorAction SilentlyContinue)) {
-    
-    # If it was already set but exists, tell the user
-    if (-not [string]::IsNullOrWhiteSpace($vmName)) {
-        Write-Warning "VM '$vmName' already exists. Please enter a different name."
-    }
-    
-    # Prompt for input
-    $vmName = Read-Host "Enter a new, unique VM name"
+        $connection = $global:DefaultVIServer
+        if ($connection -and $connection.Name -eq $server) {
+            Write-Host "Already connected to $server" -ForegroundColor Green
+            break
+        }
+
+        try {
+            $connection = Connect-VIServer -Server $server -ErrorAction Stop
+        }
+        catch {
+            Write-Host "Could not connect to $server. Try again." -ForegroundColor Red
+            $server = $null
+        }
+
+    } until ($connection -and $connection.Name -eq $server)
 }
-
-Write-Host "Valid unique VM name defined: $vmName"
