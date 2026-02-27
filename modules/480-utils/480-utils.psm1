@@ -107,6 +107,7 @@ function select-vm([string] $folder)
 
 function cloner([string] $config_path)
 {
+
     Clear-Host
     
     # Run your banner
@@ -262,6 +263,7 @@ function cloner([string] $config_path)
         Write-Host "Taking snapshot of new VM called 'base'..." -ForegroundColor Green
         $newvm | New-Snapshot -Name "base"
 
+        <#
         # Open a do loop to get the network figured out without attempting to make a new linked clone
         do {
         # Set the network
@@ -285,6 +287,7 @@ function cloner([string] $config_path)
 
         Write-Host "output of 'newvm | Get-NetworkAdapter Select-Object Parent, NetworkName | Format-Table -Autosize'"
         $newvm | Get-NetworkAdapter | Select-Object Parent, NetworkName | Format-Table -Autosize
+        #>
         }
 
     # Create a full clone if the user inputs F
@@ -318,12 +321,13 @@ function cloner([string] $config_path)
     $linkedvm | Remove-VM -Confirm:$false
     Write-Host "Temporary linked clone '$($linkedvm.Name)'"
     
+    <#
     # Set the network
         # Open a do loop to get the network figured out without attempting to make a new linked clone
         do {
         # Set the network
         $user_network = Read-Host "What network do you want to use? [$network]"
-        # Lock in user_datastore
+        # Lock in user_network
         if ([string]::IsNullOrWhiteSpace($user_network)) {
             $user_network = $network
         }
@@ -341,6 +345,195 @@ function cloner([string] $config_path)
 
         Write-Host "output of 'newvm | Get-NetworkAdapter Select-Object Parent, NetworkName | Format-Table -Autosize'"
         $newvm | Get-NetworkAdapter | Select-Object Parent, NetworkName | Format-Table -Autosize
-
+        #>
         }
+}
+
+function new-network([string] $config_path)
+{
+    # Write the config path
+    Write-Host "Config Path: $config_path"
+    # Get content from the config file
+    $config = Get-Content -Raw -Path $config_Path | ConvertFrom-Json
+
+    # Define defaults
+    $server = $config.vcenter_server
+    $esxi = $config.esxi_host
+    
+    # Define user_server
+    $user_server = Read-Host "What server do you want? [$server]"
+    # Lock in user_server
+    if ([string]::IsNullOrWhiteSpace($user_server)) {
+        $user_server = $server
     }
+    # Connect to vcenter
+    480connect -server $user_server
+
+    # Use a do loop for getting an esxi host    
+    do {
+        # Define user_esxi
+        $user_esxi = Read-Host "What ESXI host do you want? [$esxi]"
+        # Lock in user_esxi
+        if ([string]::IsNullOrWhiteSpace($user_esxi)) {
+            $user_esxi = $esxi
+        }
+
+        # Check to make sure the esxi host works
+        $esxi_test = Get-VMHost -Name "$user_esxi" -ErrorAction SilentlyContinue
+        if (-not $esxi_test) {
+            write-host "ESXI host '$user_esxi' not found, please try another ESXI host" -Foregroundcolor Red
+         } 
+    } while (-not $esxi_test)
+        
+        # Tell the user what host you're on
+        Write-Host "Using ESXI host '$user_esxi'" -ForegroundColor Green
+    
+        # Start the new network stuff finally
+        # Get valid network name
+        $new_network = $null
+
+        # Force a valid network name
+        do {
+        if (-not $new_network) { $new_network = Read-Host "Enter a network name for the new switch and portgroup on that switch" }
+        if ($new_network-match "[^a-zA-Z0-9_.-]") {
+            Write-Host "Invalid characters. Only letters, numbers, '_', '-', and '.' allowed." -ForegroundColor Yellow
+            $new_network = $null
+        } elseif (Get-VirtualPortGroup -Name $new_network -ErrorAction SilentlyContinue) {
+            Write-Host "Network '$new_network' already exists. Try again." -ForegroundColor Yellow
+            $new_network = $null
+        }
+    } until ($new_network)
+     # Create the new switch with that network
+    do {
+        try {
+            $vs = New-VirtualSwitch -Name $new_network -VMHost $user_esxi -ErrorAction Stop
+            Write-Host "Created virtual switch '$new_network' on host '$user_esxi'" -ForegroundColor Green
+            $vsCreated = $true
+        } catch {
+            Write-Host "Failed to create virtual switch. Enter a new name." -ForegroundColor Yellow
+            $new_network = Read-Host "Enter new switch name"
+            $vsCreated = $false
+        }
+    } until ($vsCreated)
+    # Create a new portgroup with the same name
+    do {
+        try {
+            $pg = New-VirtualPortGroup -Name $new_network -VirtualSwitch $vs -ErrorAction Stop
+            Write-Host "Created portgroup '$new_network' on switch '$($vs.Name)'" -ForegroundColor Green
+            $pgCreated = $true
+        } catch {
+            Write-Host "Failed to create portgroup. Enter a new name." -ForegroundColor Yellow
+            $new_network = Read-Host "New portgroup name"
+            $pgCreated = $false
+        }
+    } until ($pgCreated)
+
+    } 
+
+function get-ip()
+{
+    # define a VM
+    $user_vm = read-host "What is the name of the VM you are looking to find network info of? [e.g. 480-mgmt-luc]"
+    
+    # make sure it works
+    $vm = Get-VM -Name $user_vm -ErrorAction SilentlyContinue
+    if (-not $vm){
+        Write-Host "VM $user_vm not found or user_vm not defined, exiting"
+        return
+    }
+    Write-host "VM $user_vm found, continuing..."
+        
+        $nics = Get-NetworkAdapter -VM $vm
+
+        foreach ($nic in $nics){
+        # move forward with the rest of the function for each adapter on a vm
+            
+        # Grab info based on when the mac address info matches the interface in the loop
+        $guestnic = $vm.ExtensionData.Guest.Net | Where-object { $_.MacAddress -eq $nic.MacAddress }
+
+        # get IP info even if there isn't an IP yet
+        $ipAddrs = $guestnic.IPAddress -join ', '
+
+        # get relevent info
+        $vmName = $vm.Name
+        $macAddr = $nic.MacAddress
+        $netName = $nic.NetworkName
+
+        # provide output 
+        $output = Write-Host ""vmName" = $vmName | "netName" = $netName | "nic" = $($nic.Name) | "ipAddr" = $ipAddrs | "macAddr" = $macAddr"
+        }
+    
+
+}
+
+function startvm-stopvm(){
+    # force user to provide a valid vm name with a do loop
+    do {
+    $vmName = Read-Host "What VM would you like to start or stop?"
+
+    # make sure it works, otherwise the loop will keep repeating
+    $vm = Get-VM -Name $vmName -ErrorAction SilentlyContinue
+
+    # once it works, provide user with info about power state of the given vm
+    if ($vm){
+        # force user to provide a valid input for starting or stopping a vm
+        do {
+        Write-Host "$vmName found with power state of $($vm.PowerState)"
+        $startorstop = Read-Host "
+        [1] Start $vmName
+        [2] Stop $vmName
+        Input 1 or 2 for Start or Stop respectively"
+        # start it with 1
+        if ($startorstop -eq 1){
+            Start-VM -VM $vmName
+        }
+        # stop it with 2
+        elseif ($startorstop -eq 2){
+            Stop-VM -VM $vmName
+        }
+        # force startorstop to be 1 or 2
+        } while ($startorstop -ne 1 -and $startorstop -ne 2)
+
+    }
+    # force the vm to be a real vm, getting rid of invalid inputs
+    } while (-not $vm)
+
+}
+
+
+function set-net(){
+# force user to provide a valid vm name with a do loop
+    do {
+    $vmName = Read-Host "What VM would you see or change network info for?"
+
+    # make sure it works, otherwise the loop will keep repeating
+    $vm = Get-VM -Name $vmName -ErrorAction SilentlyContinue
+
+    # once it works, provide user with info about power state of the given vm
+    if ($vm){
+        # Get network adapters for the specified VM
+        $adapters = $vm | Get-NetworkAdapter
+        # iterate through each adapter on a given VM
+        foreach ($adapter in $adapters)
+        {
+            Write-Host "Adapter: $($adapter.Name)"
+            $user_network = Read-Host "What network do you want $($adapter.Name) to be on?"
+            
+            do {
+            # Check to make sure the network exists
+            $network_test = Get-VirtualNetwork -Name "$user_network" -ErrorAction SilentlyContinue
+            if (-not $network_test) {
+            write-host "Network '$user_network' not found, please try another network name" -Foregroundcolor Red
+            Get-VirtualNetwork | Format-Table -Autosize
+            $user_network = Read-Host "Provide a valid network name."
+            } 
+            } while (-not $network_test)
+
+            Get-VM -Name $vm | Get-NetworkAdapter -Name "$($adapter.Name)" | Set-NetworkAdapter -NetworkName $user_network
+
+            Write-Host "$vm network for $($adapter.Name) set to $user_network" -ForegroundColor Green
+        }
+        }
+    # force the vm to be a real vm, getting rid of invalid inputs
+    } while (-not $vm)
+}
