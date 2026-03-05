@@ -24,28 +24,39 @@ nat{
 protocols {
     static {
         route 0.0.0.0/0 {
-            next hop {{ gateway }}
+            next-hop {{ gateway }}
         }
     }
 }
 service {
     dns {
         forwarding {
-            allow_from {{ lan }}
+            allow-from {{ lan }}
             listen-address {{ lan_ip }}
             name-server {{ name_server }}
         }
     }
     ssh {
-        listen address 0.0.0.0
+        listen-address 0.0.0.0
     }
 }
 system {
     config-management {
-        commit-revisions 100
+        commit-revisions 200
+    }
+    conntrack {
+        modules {
+            ftp
+            h323
+            nfs
+            pptp
+            sip
+            sqlnet
+            tftp
+        }
     }
     console {
-        device tty50 {
+        device ttyS0 {
             speed 115200
         }
     }
@@ -60,11 +71,11 @@ system {
     }
     name-server {{ name_server }}
     ntp {
-        server 0.ntp.pool.org {
+        server 0.pool.ntp.org {
         }
-        server 1.ntp.pool.org {
+        server 1.pool.ntp.org {
         }
-        server 2.ntp.pool.org {
+        server 2.pool.ntp.org {
         }
     }
 }

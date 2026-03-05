@@ -10,7 +10,7 @@
   tasks:
     - name: setting the password hash fact
       set_fact: 
-        password_hash: "{{ password | password_hash('sha512') }}"
+        password_hash: "{{ password | password_hash('sha512', rounds=5000) }}"
     - name: load vyos config from template
       become: yes
       template:
