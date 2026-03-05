@@ -499,8 +499,6 @@ function startvm-stopvm(){
     } while (-not $vm)
 
 }
-
-
 function set-net(){
 # force user to provide a valid vm name with a do loop
     do {

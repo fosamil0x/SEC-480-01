@@ -1,0 +1,24 @@
+# This playbook is part of module 6 for getting fw-blue7-luc ready
+---
+- name: vyos network config
+  hosts: vyos
+  vars_prompt:
+
+    - name: password
+      prompt: Enter your new password for the vyos user and be sure to enter it correctly
+      private: true
+  tasks:
+    - name: setting the password hash fact
+      set_fact: 
+        password_hash: "{{ password | password_hash('sha512') }}"
+    - name: load vyos config from template
+      become: yes
+      template:
+        src: files/vyos/config.boot.j2
+        dest: /config/config.boot
+        mode: "0775"
+        owner: root
+        group: vyattacfg
+    - name: bounce and end
+      become: yes
+      shell: nohup bash -c "/usr/bin/sleep 5 && /usr/sbin/shutdown -r now" &
