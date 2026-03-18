@@ -15,8 +15,19 @@ linux:
       vars:
         device: ens34
 
+    ubuntu:
+      hosts:
+        10.0.5.XX:
+          hostname: ubuntu-1
+          lan_ip: 10.0.5.30
+        10.0.5.XX:
+          hostname: ubtuntu-2
+          lan_ip: 10.0.5.31
+      vars:
+        device: ens34
+
   vars:
-    public_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7xz79FtFAyExvJFI7dPh2IZqr+3jM5FfsGQbtS2sZOjrTUKPUnRDHiCb/N9cZev2610KII0aQsfO1TZER6Rj6dyQVGVaLcYEqA/PagaHABOOpugsxw5WC0O/k4x5Bgq+TOnTFEQhmCQ/aYMjANSXzMPjGkkONdP30HGTosBGhoYXf9U0OkfLatIY+XQMsey75zk9Gvo/bKwv5FXn0TrTjUg/Yua/OvSDKJBCvO+Q+KTRa6B37FV51As2iloCoYIbiS7NGciA/IPCPyK5rXpBYz2X7U1Xth1lrWAwL5nzmR64gqwnC8CEHc65YOTMQM3CJoHVUaobv+jmsxDKT1IANePLJqMDfGHZEF0hidSaK6zILt8keiXyFj4Hbggc73NdwWVd5YRUQENPwAxKH5UW8nhL6YSEMd1nRHRqL2tFfELX6NkHen5fpQ4Y6WVTHC0R2B5Rd0kAeZHvLmf9B02IUiJ8/u0QaaAdErB1x/QRZSBuWYTj12e5XHZYB0TDT3vs= deployer@480-mgmt-luc"
+    public_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCf45VE8eV/aqd/7SDUpuhNPlUR65u/a4B/HGoarLiBZTeGOiea3RyPlNs8Tk0Us4fplpMX4tj8JxF13ByUPWtE2+Q9uiK49qt6osiOYkwE+Zh6GYgdHZRuZCV91sDOqulTeFygxBDI+UvD+C6iJC2ldLboGScJNtM2da1RHKHd5WQ0hfRY+VzbSWhwoyyX9TO9Pmb3QPkUj5e1gxWSorrVBtDweNgNPc5CmWCX4Jwm1mlIoiSEDjWJjTe/Qpw3MTTNiKf9ep2ETY5yNna/A/SHQWllTnlbqwoRE/FvBaHHwuER0eZ60MIYZwcuWKKf+CUCTI6UW8CWWwTxm1x80SCI4pzoj264lV/jggwDLZbdhLcGKjcO9lKnHqDdo+IK8w2slwUoEuXgwOI+6Q/GoirdLSEiRhblmfzKMcZlh+w6aQokn/SX4xvv8OOGaOT/WlzzI7CfuGez5ST/dsGWOs25hiGku0PA0BTUSbdDiUyZq40nrGXMA5eusRmTUU/gMgU= luc-480@480-mgmt-luc"
     ansible_user: deployer
     prefix: 24
     gateway: 10.0.5.2
