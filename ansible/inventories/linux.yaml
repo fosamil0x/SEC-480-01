@@ -17,10 +17,10 @@ linux:
 
     ubuntu:
       hosts:
-        10.0.5.XX:
+        10.0.5.80:
           hostname: ubuntu-1
           lan_ip: 10.0.5.30
-        10.0.5.XX:
+        10.0.5.81:
           hostname: ubtuntu-2
           lan_ip: 10.0.5.31
       vars:
