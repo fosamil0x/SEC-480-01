@@ -17,14 +17,14 @@ linux:
 
     ubuntu:
       hosts:
-        10.0.5.80:
+        10.0.5.83:
           hostname: ubuntu-1
           lan_ip: 10.0.5.30
-        10.0.5.81:
+        10.0.5.84:
           hostname: ubtuntu-2
           lan_ip: 10.0.5.31
       vars:
-        device: ens34
+        device: ens33
 
   vars:
     public_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCf45VE8eV/aqd/7SDUpuhNPlUR65u/a4B/HGoarLiBZTeGOiea3RyPlNs8Tk0Us4fplpMX4tj8JxF13ByUPWtE2+Q9uiK49qt6osiOYkwE+Zh6GYgdHZRuZCV91sDOqulTeFygxBDI+UvD+C6iJC2ldLboGScJNtM2da1RHKHd5WQ0hfRY+VzbSWhwoyyX9TO9Pmb3QPkUj5e1gxWSorrVBtDweNgNPc5CmWCX4Jwm1mlIoiSEDjWJjTe/Qpw3MTTNiKf9ep2ETY5yNna/A/SHQWllTnlbqwoRE/FvBaHHwuER0eZ60MIYZwcuWKKf+CUCTI6UW8CWWwTxm1x80SCI4pzoj264lV/jggwDLZbdhLcGKjcO9lKnHqDdo+IK8w2slwUoEuXgwOI+6Q/GoirdLSEiRhblmfzKMcZlh+w6aQokn/SX4xvv8OOGaOT/WlzzI7CfuGez5ST/dsGWOs25hiGku0PA0BTUSbdDiUyZq40nrGXMA5eusRmTUU/gMgU= luc-480@480-mgmt-luc"

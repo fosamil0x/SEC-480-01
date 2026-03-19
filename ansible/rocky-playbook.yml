@@ -19,37 +19,19 @@
       dest: "/home/{{ ansible_user }}/.ssh/authorized_keys"
       block: "{{ public_key }}"
 
-  - name: Ensure the sudoers.d directory exists
-    ansible.builtin.file:
-      path: /etc/sudoers.d/
-      state: directory
-      owner: root
-      group: root
-      mode: '0755'
-        
-  - name: Create sudoers drop-in file for deployer
-    ansible.builtin.copy:
-      content: |
-          {{ ansible_user }} ALL=(ALL) NOPASSWD: ALL
-      dest: /etc/sudoers.d/480
-      owner: root
-      group: root
-      mode: '0440'
+  - name: Create sudoers drop in file for 480
+    file:
+      path: /etc/sudoers.d/480
+      state: touch
+      mode: 0440
+    become: yes
 
-###
-#  - name: Create sudoers drop in file for 480
-#    file:
-#      path: /etc/sudoers.d/480
-#      state: touch
-#      mode: 0440
-#    become: yes
-#
-#  - name: Create a dropin entry for /etc/sudoers.d/480
-#    blockinfile:
-#      dest: /etc/sudoers.d/480
-#      block: "{{ ansible_user }} ALL=(ALL) NOPASSWD: ALL"
-#    become: yes
-###
+  - name: Create a dropin entry for /etc/sudoers.d/480
+    blockinfile:
+      dest: /etc/sudoers.d/480
+      block: "{{ ansible_user }} ALL=(ALL) NOPASSWD: ALL"
+    become: yes
+
   - name: Set the hostname
     hostname:
       name: "{{ hostname }}"

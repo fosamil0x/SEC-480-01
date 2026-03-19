@@ -19,23 +19,23 @@
       dest: "/home/{{ ansible_user }}/.ssh/authorized_keys"
       block: "{{ public_key }}"
 
-  - name: Create sudoers drop-in file for Ansible user
+  - name: Create sudoers drop in file for 480
     file:
       path: /etc/sudoers.d/480
       state: touch
       mode: 0440
     become: yes
-    
-  - name: Add sudoers entry for Ansible user
+
+  - name: Create a drop in entry in /etc/sudoers.d/480
     blockinfile:
       dest: /etc/sudoers.d/480
-      block: "{{ ansible_user }} ALL=(ALL) NOPASSWD:ALL"
+      block: "{{ ansible_user }} ALL=(ALL) NOPASSWD: ALL"
     become: yes
 
   - name: Set the hostname
+    become: yes
     hostname:
       name: "{{ hostname }}"
-    become: yes
     
   - name: Update /etc/hosts file
     lineinfile:
