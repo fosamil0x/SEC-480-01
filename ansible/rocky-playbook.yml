@@ -19,6 +19,17 @@
       dest: "/home/{{ ansible_user }}/.ssh/authorized_keys"
       block: "{{ public_key }}"
 
+# NOTE: The "Create sudoers drop in file for 480" and "Create a dropin entry 
+# for /etc/sudoers.d/480" tasks kept giving me a timeout error. Instead of using those, I ran 
+# sudo visudo /etc/sudoers.d/480 and put 'deployer ALL=(ALL) NOPASSWD: ALL' without quotes on 
+# both boxes. I then saved the file and removed the s udoers.d content from my playbooks 
+# and ran them again. This was the only way that I could get things to work. In retrospect, 
+# I would have done this before taking a base snapshot so that the new clones that are being 
+# created have a passwordless ansible user built in and ready to go. If you have to do this too, 
+# make sure your remove the "Create sudoers drop in file for 480" and "Create a dropin entry 
+# for /etc/sudoers.d/480" tasks from this playbook, then save and run it with the command
+# provided at the top of this file. 
+
   - name: Create sudoers drop in file for 480
     file:
       path: /etc/sudoers.d/480
