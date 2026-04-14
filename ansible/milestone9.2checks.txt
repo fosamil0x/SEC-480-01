@@ -1,0 +1,4 @@
+whoami
+hostname
+Get-ADOrganizationalUnit -LDAPFilter '(name=*)' -SearchBase 'OU=BLUE7,DC=BLUE7,DC=LOCAL' | Format-table Name
+Get-ADgroupmember -identity "Domain Admins"

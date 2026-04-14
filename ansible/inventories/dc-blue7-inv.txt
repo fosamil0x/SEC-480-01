@@ -1,0 +1,8 @@
+[dcs]
+10.0.5.5
+
+[dcs:vars]
+ansible_connection=ssh
+ansible_user=deployer
+ansible_shell_type=powershell
+ansible_winrm_server_cert_validation=ignore

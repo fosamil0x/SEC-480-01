@@ -1,0 +1,130 @@
+---
+- name: Create new Active-Directory Domain & Forest
+  hosts: dcs
+  vars:
+    dc_hostname: 'dc-blue7'
+    domain_name: "blue7.local"
+    local_admin: 'deployer'
+    dns_forwarder: '10.0.5.2'
+    domain_dn: "DC=blue7,DC=local"
+    root_ou_name: "blue7"
+    dc_address: "10.0.5.5"
+    ansible_user: "deployer"
+  vars_prompt:
+    - name: "admpass"
+      prompt: "Enter a new password for local adm account 'deployer'"
+      private: yes
+      confirm: yes
+    - name: "recovery_password"
+      prompt: "Enter a recovery password for the new domain"
+      private: yes
+      confirm: yes
+  gather_facts: no
+
+  tasks:
+  - name: Set new password
+    ansible.windows.win_user:
+      name: "{{ ansible_user }}"
+      password: " {{ admpass}} "
+      state: present
+    no_log: true
+  
+  - name: Change the hostname 
+    win_hostname:
+      name: '{{ dc_hostname }}'
+  - name: Reboot
+    win_reboot:
+      post_reboot_delay: 60
+  
+  - name: Install AD DS role
+    win_feature:
+      name: AD-Domain-Services
+      state: present
+      include_management_tools: yes
+    register: ad_ds
+  
+  - name: Create a New Forest
+    microsoft.ad.domain:
+      dns_domain_name: blue7.local
+      safe_mode_password: "{{ recovery_password }}"
+      domain_netbios_name: BLUE7
+    register: domain_creation
+  
+#  
+#  - name: Promote dc-blue7 to be a domain controller
+#    microsoft.ad.domain_controller:
+#      dns_domain_name: "{{ domain_name }}"
+#      safe_mode_password: "{{ recovery_password }}"
+#      domain_admin_user: "{{domain_name}}\\{{ ansible_user }}"
+#      domain_admin_password: "{{ admpass }}"
+#      install_dns: yes
+#      state: domain_controller
+
+  - name: Reboot the dc-blue7
+    win_reboot:
+    when: domain_creation.rebooot_required | default(false)
+
+  - name: Wait for dc-blue7 to come back online
+    wait_for_connection:
+      delay: 60
+      timeout: 300
+
+  - name: Check if domain controller is reachable
+    win_ping:
+      data: 10.0.5.5
+  
+  - name: Print domain controller info
+    debug:
+      var: ansible_facts.ansible_domain_controller 
+
+  - name: Add DNS forwarder using win_shell
+    ansible.windows.win_shell: |
+      Add-DnsServerForwarder -IPAddress "{{ dns_forwarder }}"
+
+  - name: Debug forwarder
+    ansible.builtin.debug:
+      var: forwarder_result
+
+  - name: Add a local user to the Domain Admins group
+    microsoft.ad.group:
+      name: "Domain Admins"
+      members:
+        add:
+          - "dc-blue7\\deployer"
+      state: present
+
+  - name: Create top-level blue7 OU
+    microsoft.ad.ou:
+      name: blue7
+      path: "{{ domain_dn }}"
+      state: present
+
+  - name: Create Accounts OU
+    microsoft.ad.ou:
+      name: Accounts
+      path: "OU=blue7,{{ domain_dn }}"
+      state: present
+
+  - name: Create Groups OU
+    microsoft.ad.ou:
+      name: Groups
+      path: "OU=Accounts,OU=blue7,{{ domain_dn }}"
+      state: present
+
+  - name: Create Computers OU
+    microsoft.ad.ou:
+      name: Computers
+      path: "OU=blue7,{{ domain_dn }}"
+      state: present
+
+  - name: Create Servers OU
+    microsoft.ad.ou:
+      name: Servers
+      path: "OU=Computers,OU=blue7,{{ domain_dn }}"
+      state: present
+
+  - name: Create Workstations OU
+    microsoft.ad.ou:
+      name: Workstations
+      path: "OU=Computers,OU=blue7,{{ domain_dn }}"
+      state: present

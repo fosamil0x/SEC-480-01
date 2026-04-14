@@ -35,9 +35,10 @@ $prompt += "[4] get-ip `n"
 $prompt += "[5] startorstop `n"
 $prompt += "[6] 480connect `n"
 $prompt += "[7] set-net `n"
+$prompt += "[8] staticwinsrv"
 
 # make a list for those options
-$choices = @(0, 1, 2, 3, 4, 5, 6, 7)
+$choices = @(0, 1, 2, 3, 4, 5, 6, 7, 8)
 
 # make the prompt run with a while loop
 $op = $true
@@ -83,6 +84,9 @@ while($op){
 
         elseif ($driver_choice -eq 7){
             set-net
+        }
+        elseif ($driver_choice -eq 8){
+            staticwinsrv
         }
     }
     else{

@@ -535,3 +535,17 @@ function set-net(){
     # force the vm to be a real vm, getting rid of invalid inputs
     } while (-not $vm)
 }
+function staticwinsrv(){
+    $vmname = "dc-blue7"
+    Write-Host "Changing IP for dc-blue7. Use local admin creds."
+    $creds = Get-Credential
+
+    $ipnetsh = 'netsh interface ip set address name="Ethernet0" static 10.0.5.5 255.255.255.0 10.0.5.2'
+
+    Invoke-VMScript -VM $vmname -GuestCredential $creds -ScriptType Bat -ScriptText $ipnetsh
+
+    $dnsnetsh = 'netsh interface ip set dnsservers name="Ethernet0" static 10.0.5.2'
+
+    Invoke-VMScript -VM $vmname -GuestCredential $creds -ScriptType Bat -ScriptText $dnsnetsh
+
+}
